@@ -1,0 +1,43 @@
+//@version=5
+indicator("0612", shorttitle="EMA Cross", overlay=true)
+
+// Input parameters
+shortEmaLength = input.int(3, title="Short EMA Length")
+midEmaLength = input.int(6, title="Mid EMA Length")
+longEmaLength = input.int(21, title="Long EMA Length")
+
+// Calculate EMAs
+emaShort = ta.ema(close, shortEmaLength)
+emaMid = ta.ema(close, midEmaLength)
+emaLong = ta.ema(close, longEmaLength)
+
+// Generate crossover signals
+buySignal = ta.crossover(emaShort, emaMid) and close > emaLong
+sellSignal = ta.crossunder(emaShort, emaMid) and close < emaLong
+
+// Calculate candle length
+candleLength = high - low
+
+// Offset value to shift the labels
+labelOffset = 2 * candleLength
+
+// Mark crossover signals with arrows and display candle length
+if buySignal
+    label.new(x=bar_index, y=high + labelOffset, text="BUY\nCandle Length: " + str.tostring(candleLength), color=color.green, textcolor=color.white, style=label.style_label_down, size=size.small)
+
+if sellSignal
+    label.new(x=bar_index, y=low - labelOffset, text="SELL\nCandle Length: " + str.tostring(candleLength), color=color.red, textcolor=color.white, style=label.style_label_up, size=size.small)
+
+// Check post-signal conditions on the next candle after the crossover
+sustainBuy = (buySignal[1] and close > emaShort)
+sustainSell = (sellSignal[1] and close < emaShort)
+
+// Plot '+' for sustained buy and '-' for sustained sell
+plotshape(series=sustainBuy, title="Sustain Buy", location=location.abovebar, color=color.green, style=shape.labelup, text="+", offset=0)
+plotshape(series=sustainSell, title="Sustain Sell", location=location.belowbar, color=color.red, style=shape.labeldown, text="-", offset=0)
+
+
+// Plot EMAs
+plot(emaShort, title="EMA 3", color=color.blue, linewidth=1)
+plot(emaMid, title="EMA 6", color=color.red, linewidth=1)
+plot(emaLong, title="EMA 21", color=color.green, linewidth=1)
